@@ -6,8 +6,8 @@
   "types": "dist/index.d.ts",
   "scripts": {
     "prepare": "npm run build",
-    "build": "tsup --dts --minify",
-    "build:watch": "tsup src/index.ts --watch --dts --minify",
+    "build": "./node_modules/.bin/tsup --dts --minify",
+    "build:watch": "./node_modules/.bin/tsup src/index.ts --watch --dts --minify",
     "prepublishOnly": "npm run build",
     "test": "jest",
     "test:watch": "jest --watchAll",
