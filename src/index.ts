@@ -103,6 +103,14 @@ export class Metrics {
     }
   }
 
+  public static set socket_path(socket_path: string) {
+    Data.socket_path = socket_path;
+  }
+
+  public static get socket_path() {
+    return Data.socket_path;
+  }
+
   /**
    * Starts actual monitoring.
    */

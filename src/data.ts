@@ -7,26 +7,37 @@ export interface ChannelTopic extends Channel {
 
 export default class Data {
   #socket!: Socket;
+  #path: string;
   #channels = new Map<string, Channel>();
   private static instance: Data;
-
 
   private constructor() {
     return
   }
 
+  public static set socket_path(socket_path: string) {
+    if (!Data.instance) {
+      Data.instance = new Data();
+    }
+    Data.instance.#path = socket_path;
+  }
+
   public static connect(): Socket {
     if (!Data.instance) {
       Data.instance = new Data();
+    }
 
-      if(window) {
-        Data.instance.#socket = new Socket("__METRICS_ENDPOINT__", {
-          params: {
-            source_url: window.location.href
-          }
-        })
-        Data.instance.#socket.connect();
-      }
+    if(!Data.instance.#path) {
+      console.warn("[metrics]: Please set path using `Metrics.socket_path = 'ws://localhost:3000/socket`")
+    }
+
+    if(window) {
+      Data.instance.#socket = new Socket(Data.instance.#path || 'ws://localhost:3000/socket', {
+        params: {
+          source_url: window.location.href
+        }
+      })
+      Data.instance.#socket.connect();
     }
 
     return Data.instance.#socket;
