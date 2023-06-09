@@ -103,12 +103,11 @@ export class Metrics {
     }
   }
 
-  public static set socket_path(socket_path: string) {
-    Data.socket_path = socket_path;
-  }
-
-  public static get socket_path() {
-    return Data.socket_path;
+  /**
+   * Static method to set config.
+   */
+  public static set config(config: { apiKey: string, socketPath: string }) {
+    Data.config = config;
   }
 
   /**
@@ -119,14 +118,9 @@ export class Metrics {
 
     if (video || this.#video) {
       if(!this.#video) this.#video = video as HTMLVideoElement;
-      this.#session = this.#initiateSession();
+      this.#session = this.#initiateSession(this.#video);
 
       this.#recordSession();
-      // if (this.hls) {
-      //   this.#tapIntoHls();
-      // } else {
-      //   this.#monitorSource();
-      // }
       this.#monitorTracks();
 
       if (window) {
@@ -142,8 +136,8 @@ export class Metrics {
   }
 
   demonitor(): void {
-    if (this.#session) {
-      Data.stopSession(this.#session);
+    if (this.#session && this.#video) {
+      Data.stopSession(this.#video);
     }
   }
 
@@ -228,9 +222,9 @@ export class Metrics {
     }
   }
 
-  #initiateSession(): Channel {
+  #initiateSession(video: HTMLVideoElement): Channel {
     Data.connect();
-    return Data.startSession({ identifier: this.identifier, metadata: this.metadata, session_data: this.session_data });
+    return Data.startSession(video, { identifier: this.identifier, metadata: this.metadata, session_data: this.session_data });
   }
 
   #sendSessionData() {

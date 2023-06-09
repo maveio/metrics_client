@@ -11,12 +11,10 @@
 
 # metrics
 
-Our components library uses metrics to analyze video usage. This repo is meant to be transparent and accountable.
-
+Our components library uses metrics to analyze video usage. This repo is meant to be transparent and accountable. This is only the client library and is part of [Mave Metrics Server](https://github.com/maveio/metrics-server)
 
 [Install](#install) •
 [Usage](#usage)
-
 
 ## Install
 
@@ -28,4 +26,33 @@ npm install @maveio/metrics
 
 ## Usage
 
-This library can't be used separately at this point. If you are interested in running video metrics without [mave.io](https://mave.io), please contact us.
+```javascript
+import { Metrics } from '@maveio/metrics';
+Metrics.socket_path = 'wss://{your domain here}/socket'
+```
+
+To collect video events, you will need to include the following script on your page:
+
+```javascript
+const metrics = new Metrics("#my_video", "label name", {
+  custom_query_id: 1234,
+})
+metrics.monitor()
+```
+
+When you are using the hls.js library you can use the following code to monitor the video:
+
+```javascript
+const video = document.getElementById('hls_video');
+const videoSrc = 'https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8';
+
+if (Hls.isSupported()) {
+  const hls = new Hls();
+  hls.loadSource(videoSrc);
+  hls.attachMedia(video);
+  new Metrics(hls, "Big buck bunny").monitor()
+} else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+  video.src = videoSrc;
+  new Metrics("#hls_video", "Big buck bunny").monitor()
+}
+```
