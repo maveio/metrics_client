@@ -28,18 +28,25 @@ npm install @maveio/metrics
 
 ```javascript
 import { Metrics } from '@maveio/metrics';
-Metrics.socket_path = 'wss://{your domain here}/socket'
+Metrics.config = {
+    socketPath: 'wss://{your domain here}/socket',
+    apiKey: '{your api key here}',
+}
 ```
+  
+To collect video events you will need to create an Metrics instance using each `HTMLVideoElement` or `Hls` object:
 
-To collect video events, you will need to include the following script on your page:
+`new Metrics(<querySelector | Hls object>, <string>, <optional video query metadata>, <optional session query metadata>)` 
 
+For instance, you can do this in your page:
+  
 ```javascript
 const metrics = new Metrics("#my_video", "label name", {
-  custom_query_id: 1234,
+  my_custom_query_id: 1234,
 })
 metrics.monitor()
 ```
-
+  
 When you are using the hls.js library you can use the following code to monitor the video:
 
 ```javascript
