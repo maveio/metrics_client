@@ -63,10 +63,6 @@ export default class Data {
       return result;
     }
 
-    if (Data.instance.#socket.connectionState() != "open") {
-      console.warn("[metrics]: Socket not connected")
-    }
-
     const session = Data.instance.#socket.channel(`session:${uuid()}`, {...metadata, source_url: window.location.href, key: Data.instance.#key});
 
     Data.instance.#channels.set(video, session);
