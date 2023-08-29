@@ -11,6 +11,10 @@
 
 # metrics
 
+[![npm version](https://img.shields.io/npm/v/%40maveio%2Fmetrics?color=5850ec)](https://www.npmjs.com/package/@maveio/metrics) 
+[![CodeQL](https://img.shields.io/github/actions/workflow/status/maveio/metrics/github-code-scanning%2Fcodeql?label=CodeQL&color=5850ec)](https://github.com/maveio/metrics/actions/workflows/github-code-scanning/codeql)
+[![Discord server](https://img.shields.io/badge/Discord-mave.io-5850ec)](https://discord.gg/SBCKwnwHkC)
+
 Our components library uses metrics to analyze video usage. This repo is meant to be transparent and accountable. This is only the client library and is part of [Mave Metrics Server](https://github.com/maveio/metrics-server)
 
 [Install](#install) •
