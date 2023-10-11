@@ -1,5 +1,5 @@
-import { Channel, Socket } from "phoenix";
-import { uuid } from "./utils";
+import { Channel, Socket } from 'phoenix';
+import { uuid } from './utils';
 
 export interface ChannelTopic extends Channel {
   topic: string;
@@ -15,10 +15,10 @@ export default class Data {
   private static instance: Data;
 
   private constructor() {
-    return
+    return;
   }
 
-  public static set config(config: { apiKey: string, socketPath: string }) {
+  public static set config(config: { apiKey: string; socketPath: string }) {
     if (!Data.instance) {
       Data.instance = new Data();
     }
@@ -31,39 +31,53 @@ export default class Data {
       Data.instance = new Data();
     }
 
-    if(!Data.instance.#key && !Data.instance.#warningKeyGiven) {
-      console.warn("[metrics]: Set apiKey using `Metrics.config = {apiKey: 'your_key'}`")
+    if (!Data.instance.#key && !Data.instance.#warningKeyGiven) {
+      console.warn(
+        "[metrics]: Set apiKey using `Metrics.config = {apiKey: 'your_key'}`"
+      );
       Data.instance.#warningKeyGiven = true;
     }
 
-    if(!Data.instance.#path && !Data.instance.#warningPathGiven) {
-      console.warn("[metrics]: Set path using `Metrics.config = {socketPath: 'ws://localhost:3000/socket`}")
+    if (!Data.instance.#path && !Data.instance.#warningPathGiven) {
+      console.warn(
+        "[metrics]: Set path using `Metrics.config = {socketPath: 'ws://localhost:3000/socket`}"
+      );
       Data.instance.#warningPathGiven = true;
     }
 
-    if(!Data.instance.#socket) {
-      if(window) {
-        Data.instance.#socket = new Socket(Data.instance.#path || 'ws://localhost:3000/socket', {
-          params: {
-            source_url: window.location.href,
-            key: Data.instance.#key
+    if (!Data.instance.#socket) {
+      if (window) {
+        Data.instance.#socket = new Socket(
+          Data.instance.#path || 'ws://localhost:3000/socket',
+          {
+            params: {
+              source_url: window.location.href,
+              key: Data.instance.#key,
+            },
           }
-        })
+        );
         Data.instance.#socket.connect();
       }
-    }    
+    }
 
     return Data.instance.#socket;
   }
 
-  public static startSession(video: HTMLVideoElement, metadata?: object): Channel {
+  public static startSession(
+    video: HTMLVideoElement,
+    metadata?: object
+  ): Channel {
     const result = Data.instance.#channels.get(video);
 
     if (result) {
       return result;
     }
 
-    const session = Data.instance.#socket.channel(`session:${uuid()}`, {...metadata, source_url: window.location.href, key: Data.instance.#key});
+    const session = Data.instance.#socket.channel(`session:${uuid()}`, {
+      ...metadata,
+      source_url: window.location.href,
+      key: Data.instance.#key,
+    });
 
     Data.instance.#channels.set(video, session);
 

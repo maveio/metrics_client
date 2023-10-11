@@ -13,7 +13,7 @@ export default defineConfig({
   noExternal: ['phoenix'],
   esbuildPlugins: [
     replace({
-      '__buildVersion': json.version
+      __buildVersion: json.version,
     }),
-  ]
-})
+  ],
+});

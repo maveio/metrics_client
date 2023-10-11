@@ -1,19 +1,21 @@
-import { Channel } from "phoenix";
-import Data from "./data";
-import Logger from "./logger";
+import { Channel } from 'phoenix';
+import Data from './data';
+import Logger from './logger';
 
 enum NativeEvents {
-  DURATIONCHANGE = 'durationchange',
-  LOADEDMETADATA = 'loadedmetadata',
-  LOADEDDATA = 'loadeddata',
-  CANPLAY = 'canplay',
-  CANPLAYTHROUGH = 'canplaythrough',
-  PLAY = 'play',
+  DURATIONCHANGE = "durationchange",
+  LOADEDMETADATA = "loadedmetadata",
+  TIMEUPDATE = "timeupdate",
+  LOADEDDATA = "loadeddata",
+  CANPLAY = "canplay",
+  CANPLAYTHROUGH = "canplaythrough",
+  SEEKED = "seeked",
+  RATECHANGE = "ratechange",
+  VOLUMECHANGE = "volumechange",
   PLAYING = 'playing',
+  ENDED = 'ended',
+  PLAY = 'play',
   PAUSE = 'pause',
-  SEEKED = 'seeked',
-  RATECHANGE = 'ratechange',
-  VOLUMECHANGE = 'volumechange',
   ERROR = 'error',
 }
 
@@ -37,14 +39,13 @@ export class Metrics {
   #video!: HTMLVideoElement;
   #session!: Channel;
 
-  playFrom?: number;
-  playFromAt?: number;
   rebuffering = false;
+  lastLastTimeupdateCurrentTime = 0;
+  lastTimeupdateCurrentTime = 0;
   lastCurrentTime = 0;
-  instantiatedAt = new Date();
-  bufferInterval?: ReturnType<typeof setInterval>
+  bufferInterval?: ReturnType<typeof setInterval>;
   bufferTimeInterval = 50;
-  bufferOffset = (this.bufferTimeInterval - 20) / 1000;
+  bufferOffset = (this.bufferTimeInterval - 40) / 1000;
 
   selectedLanguageVTT?: string;
   fullscreen = false;
@@ -56,7 +57,12 @@ export class Metrics {
    * @param metadata - Additional video metadata.
    * @param session - Additional metadata to be sent with the session.
    */
-  public constructor(querySelectorable: string, identifier: string, metadata?: object, session?: object);
+  public constructor(
+    querySelectorable: string,
+    identifier: string,
+    metadata?: object,
+    session?: object
+  );
 
   /**
    * The `Metrics` class is the core of Metrics used for monitoring video events.
@@ -65,7 +71,12 @@ export class Metrics {
    * @param metadata - Additional video metadata.
    * @param session - Additional metadata to be sent with the session.
    */
-  public constructor(videoElement: HTMLMediaElement | HTMLVideoElement, identifier: string, metadata?: object, session?: object);
+  public constructor(
+    videoElement: HTMLMediaElement | HTMLVideoElement,
+    identifier: string,
+    metadata?: object,
+    session?: object
+  );
 
   /**
    * Overload for hls.js
@@ -74,18 +85,28 @@ export class Metrics {
    * @param metadata - Additional video metadata.
    * @param session - Additional metadata to be sent with the session.
    */
-  public constructor(hls: Hls, identifier: string, metadata?: object, session?: object);
+  public constructor(
+    hls: Hls,
+    identifier: string,
+    metadata?: object,
+    session?: object
+  );
 
   public constructor(...args: Array<unknown>) {
     if (args.length <= 1) {
-      Logger.error('Metrics requires at least two arguments: querySelectorable and identifier or hls and identifier.');
+      Logger.error(
+        'Metrics requires at least two arguments: querySelectorable and identifier or hls and identifier.'
+      );
     } else {
       if (typeof args[0] === 'string') {
-        this.querySelectorable = args[0]
+        this.querySelectorable = args[0];
         this.identifier = args[1] as string;
       }
 
-      if (args[0] instanceof HTMLVideoElement || args[0] instanceof HTMLMediaElement) {
+      if (
+        args[0] instanceof HTMLVideoElement ||
+        args[0] instanceof HTMLMediaElement
+      ) {
         this.#video = args[0] as HTMLVideoElement;
         this.identifier = args[1] as string;
       } else if (typeof args[0] === 'object') {
@@ -93,11 +114,11 @@ export class Metrics {
         this.identifier = args[1] as string;
       }
 
-      if(args[2]) {
+      if (args[2]) {
         this.metadata = args[2] as object;
       }
 
-      if(args[3]) {
+      if (args[3]) {
         this.session_data = args[3] as object;
       }
     }
@@ -106,7 +127,7 @@ export class Metrics {
   /**
    * Static method to set config.
    */
-  public static set config(config: { apiKey: string, socketPath: string }) {
+  public static set config(config: { apiKey: string; socketPath: string }) {
     Data.config = config;
   }
 
@@ -114,22 +135,27 @@ export class Metrics {
    * Starts actual monitoring.
    */
   monitor(): Metrics {
-    const video = this.querySelectorable ? document.querySelector(this.querySelectorable) : this.hls?.media;
+    const video = this.querySelectorable
+      ? document.querySelector(this.querySelectorable)
+      : this.hls?.media;
 
     if (video || this.#video) {
-      if(!this.#video) this.#video = video as HTMLVideoElement;
+      if (!this.#video) this.#video = video as HTMLVideoElement;
       this.#session = this.#initiateSession(this.#video);
 
       this.#recordSession();
       this.#monitorTracks();
 
       if (window) {
-        const resizeObserver = new ResizeObserver(this.#fullscreenChange.bind(this));
+        const resizeObserver = new ResizeObserver(
+          this.#fullscreenChange.bind(this)
+        );
         resizeObserver.observe(this.#video);
       }
-
     } else {
-      Logger.error(`${this.querySelectorable} is not a valid reference to a HTMLVideoElement.`);
+      Logger.error(
+        `${this.querySelectorable} is not a valid reference to a HTMLVideoElement.`
+      );
     }
 
     return this;
@@ -156,8 +182,12 @@ export class Metrics {
 
     const observer = new MutationObserver((mutations) => {
       mutations.forEach((mutation) => {
-        if (mutation.type === 'attributes' && mutation.attributeName === 'src' && lastSource !== this.#video.currentSrc) {
-          sendSource()
+        if (
+          mutation.type === 'attributes' &&
+          mutation.attributeName === 'src' &&
+          lastSource !== this.#video.currentSrc
+        ) {
+          sendSource();
         }
       });
     });
@@ -165,21 +195,24 @@ export class Metrics {
     observer.observe(this.#video, {
       attributeFilter: ['src'],
       attributeOldValue: true,
-      subtree: true
+      subtree: true,
     });
-
 
     const sendSource = () => {
       const source_url = this.#video.currentSrc;
 
-      if (!source_url) return
+      if (!source_url) return;
 
-      this.#session?.push("event", {
-        name: 'source_set',
-        timestamp: new Date().getTime(),
-        source_url
-      }, this.timeout);
-    }
+      this.#session?.push(
+        'event',
+        {
+          name: 'source_set',
+          timestamp: new Date().getTime(),
+          source_url,
+        },
+        this.timeout
+      );
+    };
 
     sendSource();
   }
@@ -196,9 +229,9 @@ export class Metrics {
           height: data.height,
           bitrate: data.bitrate,
           codec: data.videoCodec,
-          source_url: data.uri
-        }
-        this.#session?.push("event", params, this.timeout);
+          source_url: data.uri,
+        };
+        this.#session?.push('event', params, this.timeout);
       });
     }
   }
@@ -211,11 +244,15 @@ export class Metrics {
       const cue = cues[0] as VTTCue;
       const selectedLanguage = cue.track?.language;
       if (this.selectedLanguageVTT !== selectedLanguage) {
-        this.#session?.push("event", {
-          name: 'track_set',
-          timestamp: new Date().getTime(),
-          language: selectedLanguage
-        }, this.timeout);
+        this.#session?.push(
+          'event',
+          {
+            name: 'track_set',
+            timestamp: new Date().getTime(),
+            language: selectedLanguage,
+          },
+          this.timeout
+        );
 
         this.selectedLanguageVTT = selectedLanguage;
       }
@@ -224,7 +261,11 @@ export class Metrics {
 
   #initiateSession(video: HTMLVideoElement): Channel {
     Data.connect();
-    return Data.startSession(video, { identifier: this.identifier, metadata: this.metadata, session_data: this.session_data });
+    return Data.startSession(video, {
+      identifier: this.identifier,
+      metadata: this.metadata,
+      session_data: this.session_data,
+    });
   }
 
   #sendSessionData() {
@@ -240,63 +281,105 @@ export class Metrics {
   #recordEvent(event: Event) {
     const params = {
       name: event.type,
-      timestamp: new Date().getTime()
-    }
+      timestamp: new Date().getTime(),
+    };
 
     switch (event.type) {
       case NativeEvents.PLAY:
-        this.playFromAt = new Date().getTime();
-        this.playFrom = this.#video.currentTime;
+        this.#session?.push(
+          'event',
+          {
+            ...params,
+            from: this.#video?.currentTime,
+          },
+          this.timeout
+        );
 
-        this.#session?.push("event", {
-          ...params,
-          from: this.#video?.currentTime,
-        }, this.timeout);
-
-        this.bufferInterval = setInterval(this.#checkBuffering.bind(this), this.bufferTimeInterval);
+        this.bufferInterval = setInterval(
+          this.#checkBuffering.bind(this),
+          this.bufferTimeInterval
+        );
 
         break;
       case NativeEvents.PAUSE:
-        // We don't use currentTime because of scrubbing
-        if (this.playFrom !== undefined && this.playFromAt) {
-          const playTo = (new Date().getTime() - this.playFromAt) / 1000;
-
-          this.#session?.push("event", {
+        this.#session?.push(
+          'event',
+          {
             ...params,
-            to: this.playFrom+playTo,
-          }, this.timeout);
+            to: this.#video?.currentTime,
+          },
+          this.timeout
+        );
+
+        this.#checkBuffering();
+        clearInterval(this.bufferInterval);
+        break;
+
+      case NativeEvents.TIMEUPDATE:
+        this.lastLastTimeupdateCurrentTime = this.lastTimeupdateCurrentTime;
+        this.lastTimeupdateCurrentTime = this.#video?.currentTime;
+        break;
+      case NativeEvents.ERROR:
+        this.#session?.push(
+          'event',
+          {
+            ...params,
+            name: 'playback_failure',
+          },
+          this.timeout
+        );
+        break;
+      case NativeEvents.SEEKED:
+        if(!this.#video?.paused) {
+          this.#session?.push(
+            'event',
+            {
+              ...params,
+              name: 'pause',
+              to: this.lastLastTimeupdateCurrentTime,
+            },
+            this.timeout
+          );
+
+          this.#session?.push(
+            'event',
+            {
+              ...params,
+              name: 'play',
+              from: this.#video?.currentTime,
+            },
+            this.timeout
+          );
         }
 
-        clearInterval(this.bufferInterval);
-        break
-      case NativeEvents.ERROR:
-        this.#session?.push("", {
-          ...params,
-          name: 'playback_failure',
-        }, this.timeout);
+
+        this.#session?.push(
+          'event',
+          params,
+          this.timeout
+        );
         break;
-      default:
-        this.#session?.push("event", params, this.timeout);
-        break
     }
   }
 
   #checkBuffering() {
-    const stalled = this.#video?.currentTime < this.lastCurrentTime + this.bufferOffset;
+    const stalled =
+      this.#video?.currentTime < this.lastCurrentTime + this.bufferOffset;
 
     if (!this.#video?.paused && stalled && !this.rebuffering) {
       this.rebuffering = true;
-      this.#session?.push("event", {
+      this.#session?.push('event', {
         name: 'rebuffering_start',
-        timestamp: new Date().getTime()
+        from: this.#video?.currentTime,
+        timestamp: new Date().getTime(),
       });
     }
 
-    if (!this.#video?.paused && !stalled && this.rebuffering) {
+    if (!stalled && this.rebuffering) {
       this.rebuffering = false;
-      this.#session?.push("event", {
+      this.#session?.push('event', {
         name: 'rebuffering_end',
-        timestamp: new Date().getTime()
+        timestamp: new Date().getTime(),
       });
     }
 
@@ -305,21 +388,29 @@ export class Metrics {
 
   #fullscreenChange() {
     if (window.innerHeight == screen.height && !this.fullscreen) {
-      const timestamp = new Date().getTime()
-      this.fullscreen = true
-      this.#session?.push("event", {
-        name: 'fullscreen_enter',
-        timestamp
-      }, this.timeout);
+      const timestamp = new Date().getTime();
+      this.fullscreen = true;
+      this.#session?.push(
+        'event',
+        {
+          name: 'fullscreen_enter',
+          timestamp,
+        },
+        this.timeout
+      );
     }
 
     if (window.innerHeight != screen.height && this.fullscreen) {
-      const timestamp = new Date().getTime()
-      this.fullscreen = false
-      this.#session?.push("event", {
-        name: 'fullscreen_exit',
-        timestamp
-      }, this.timeout);
+      const timestamp = new Date().getTime();
+      this.fullscreen = false;
+      this.#session?.push(
+        'event',
+        {
+          name: 'fullscreen_exit',
+          timestamp,
+        },
+        this.timeout
+      );
     }
   }
 }
