@@ -11,7 +11,7 @@
 
 # metrics
 
-[![npm version](https://img.shields.io/npm/v/%40maveio%2Fmetrics?color=5850ec)](https://www.npmjs.com/package/@maveio/metrics) 
+[![npm version](https://img.shields.io/npm/v/%40maveio%2Fmetrics?color=5850ec)](https://www.npmjs.com/package/@maveio/metrics)
 [![CodeQL](https://img.shields.io/github/actions/workflow/status/maveio/metrics/github-code-scanning%2Fcodeql?label=CodeQL&color=5850ec)](https://github.com/maveio/metrics/actions/workflows/github-code-scanning/codeql)
 [![Discord server](https://img.shields.io/badge/Discord-mave.io-5850ec)](https://discord.gg/SBCKwnwHkC)
 
@@ -33,24 +33,24 @@ npm install @maveio/metrics
 ```javascript
 import { Metrics } from '@maveio/metrics';
 Metrics.config = {
-    socketPath: 'wss://{your domain here}/socket',
-    apiKey: '{your api key here}',
-}
+  socketPath: 'wss://{your domain here}/socket',
+  apiKey: '{your api key here}',
+};
 ```
-  
+
 To collect video events you will need to create an Metrics instance using each `HTMLVideoElement` or `Hls` object:
 
-`new Metrics(<querySelector | Hls object>, <string>, <optional video query metadata>, <optional session query metadata>)` 
+`new Metrics(<querySelector | Hls object>, <string>, <optional video query metadata>, <optional session query metadata>)`
 
 For instance, you can do this in your page:
-  
+
 ```javascript
-const metrics = new Metrics("#my_video", "label name", {
+const metrics = new Metrics('#my_video', 'label name', {
   my_custom_query_id: 1234,
-})
-metrics.monitor()
+});
+metrics.monitor();
 ```
-  
+
 When you are using the hls.js library you can use the following code to monitor the video:
 
 ```javascript
@@ -61,9 +61,9 @@ if (Hls.isSupported()) {
   const hls = new Hls();
   hls.loadSource(videoSrc);
   hls.attachMedia(video);
-  new Metrics(hls, "Big buck bunny").monitor()
+  new Metrics(hls, 'Big buck bunny').monitor();
 } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
   video.src = videoSrc;
-  new Metrics("#hls_video", "Big buck bunny").monitor()
+  new Metrics('#hls_video', 'Big buck bunny').monitor();
 }
 ```

@@ -7,12 +7,13 @@
   "scripts": {
     "prepare": "npm run build",
     "build": "./node_modules/.bin/tsup --dts --minify",
-    "build:watch": "./node_modules/.bin/tsup src/index.ts --watch --dts --minify",
+    "dev": "./node_modules/.bin/tsup src/index.ts --watch --dts --minify",
     "prepublishOnly": "npm run build",
     "test": "jest",
     "test:watch": "jest --watchAll",
     "lint": "eslint . --ext .ts",
-    "lint:fix": "eslint . --ext .ts --fix"
+    "lint:fix": "eslint . --ext .ts --fix",
+    "prettier": "npx prettier . --write"
   },
   "files": [
     "dist"
