@@ -47,6 +47,11 @@ export default class Data {
 
     if (!Data.instance.#socket) {
       if (window) {
+
+        const retryWindow = (tries: number) => {
+          return [1000, 5000, 10000][tries - 1] || 25000
+        }
+
         Data.instance.#socket = new Socket(
           Data.instance.#path || 'ws://localhost:3000/socket',
           {
@@ -54,6 +59,8 @@ export default class Data {
               source_url: window.location.href,
               key: Data.instance.#key,
             },
+            reconnectAfterMs: retryWindow,
+            rejoinAfterMs: retryWindow
           }
         );
         Data.instance.#socket.connect();
