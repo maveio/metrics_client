@@ -96,7 +96,6 @@ jobs:
           git add "package.json"
           git add "CHANGELOG.md"
           git commit -m "release ${{ env.NEW_VERSION }}"
-          git tag ${{ env.NEW_VERSION }}
 
       - name: Install dependencies
         run: yarn install
