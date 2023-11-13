@@ -168,6 +168,8 @@ export class Metrics {
   }
 
   demonitor(): void {
+    if(!this.#monitoring) return;
+    
     this.#resizeObserver?.unobserve(this.#video);
     this.#unrecordSession();
     
