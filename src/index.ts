@@ -50,6 +50,9 @@ export class Metrics {
   selectedLanguageVTT?: string;
   fullscreen = false;
 
+  #resizeObserver?: ResizeObserver;
+  #monitoring = false;
+
   /**
    * The `Metrics` class is the core of Metrics used for monitoring video events.
    * @param querySelectorable - A valid query selector to a HTMLVideoElement.
@@ -139,6 +142,8 @@ export class Metrics {
       ? document.querySelector(this.querySelectorable)
       : this.hls?.media;
 
+    if(this.#monitoring) return this;
+
     if (video || this.#video) {
       if (!this.#video) this.#video = video as HTMLVideoElement;
       this.#session = this.#initiateSession(this.#video);
@@ -146,12 +151,13 @@ export class Metrics {
       this.#recordSession();
       this.#monitorTracks();
 
-      if (window) {
-        const resizeObserver = new ResizeObserver(
+      if (window && !this.#resizeObserver) {
+        this.#resizeObserver = new ResizeObserver(
           this.#fullscreenChange.bind(this)
         );
-        resizeObserver.observe(this.#video);
+        this.#resizeObserver.observe(this.#video);
       }
+      this.#monitoring = true;
     } else {
       Logger.error(
         `${this.querySelectorable} is not a valid reference to a HTMLVideoElement.`
@@ -162,6 +168,9 @@ export class Metrics {
   }
 
   demonitor(): void {
+    this.#resizeObserver?.unobserve(this.#video);
+    this.#unrecordSession();
+    
     if (this.#session && this.#video) {
       Data.stopSession(this.#video);
     }
@@ -275,6 +284,12 @@ export class Metrics {
   #recordSession() {
     for (const event of Object.values(NativeEvents)) {
       this.#video.addEventListener(event, this.#recordEvent.bind(this));
+    }
+  }
+
+  #unrecordSession() {
+    for (const event of Object.values(NativeEvents)) {
+      this.#video.removeEventListener(event, this.#recordEvent.bind(this));
     }
   }
 
