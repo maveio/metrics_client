@@ -254,7 +254,7 @@ export class Metrics {
     if (cues?.length) {
       const cue = cues[0] as VTTCue;
       const selectedLanguage = cue.track?.language;
-      if (this.selectedLanguageVTT !== selectedLanguage) {
+      if (selectedLanguage && this.selectedLanguageVTT !== selectedLanguage) {
         this.#session?.push(
           'event',
           {
